@@ -1,10 +1,11 @@
 const express = require("express");
 const personController = require("../controllers/personController");
 const router = express.Router();
+const authController = require("../controllers/authController");
 
 router
   .route("/")
-  .get(personController.queryPersons)
+  .get(authController.protect, personController.queryPersons)
   .post(personController.createPerson);
 router
   .route("/:id")
