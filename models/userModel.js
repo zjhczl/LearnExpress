@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 //指定数据模型
 const user = new mongoose.Schema({
   name: {
@@ -8,6 +9,11 @@ const user = new mongoose.Schema({
     required: [true, "we need your name"],
   },
   phone: String,
+  role: {
+    type: String,
+    enum: ["user", "admin"],
+    default: "user",
+  },
   email: {
     type: String,
     required: [true, "we need your email"],
@@ -30,7 +36,9 @@ const user = new mongoose.Schema({
     },
     message: "password are not the same",
   },
-  //   passwordChangedAt: Date,
+  passwordChangedAt: Date,
+  passwordResetToken: String,
+  passwordResetTokenExpires: Date,
 });
 
 //密码加密
@@ -49,6 +57,21 @@ user.methods.correctPassword = async function (password, userPassword) {
 //验证是否更改密码
 user.methods.changePassword = async function (password, userPassword) {
   return await bcrypt.compare(password, userPassword);
+};
+
+//生成密码重置token
+user.methods.createPasswordResetToken = function () {
+  //创建一个字符串
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  //加密储存到数据库
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  this.passwordResetTokenExpires = Date.now() + 10 * 60 * 1000;
+  // this.save();
+  return resetToken;
 };
 
 //创建模型

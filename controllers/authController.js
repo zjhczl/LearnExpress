@@ -83,3 +83,27 @@ exports.protect = async (req, res, next) => {
 
   next();
 };
+
+//权限管理
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).send("没有权限");
+    }
+    next();
+  };
+};
+
+exports.forgotPassword = async (req, res, next) => {
+  //get user by email
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) {
+    return res.status(404).send("你还没有注册");
+  }
+  //生成重置密码token
+  const resetToken = user.createPasswordResetToken();
+  console.log(resetToken);
+  // send token
+};
+
+exports.resetPassword = (req, res, next) => {};

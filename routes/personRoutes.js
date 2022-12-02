@@ -5,7 +5,11 @@ const authController = require("../controllers/authController");
 
 router
   .route("/")
-  .get(authController.protect, personController.queryPersons)
+  .get(
+    authController.protect,
+    authController.restrictTo("user", "admin"),
+    personController.queryPersons
+  )
   .post(personController.createPerson);
 router
   .route("/:id")
