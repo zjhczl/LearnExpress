@@ -102,6 +102,8 @@ exports.forgotPassword = async (req, res, next) => {
   }
   //生成重置密码token
   const resetToken = user.createPasswordResetToken();
+  //保存到数据库
+  await user.save({validateBeforeSave:false});
   console.log(resetToken);
   // send token
 };

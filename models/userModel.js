@@ -70,7 +70,6 @@ user.methods.createPasswordResetToken = function () {
     .digest("hex");
 
   this.passwordResetTokenExpires = Date.now() + 10 * 60 * 1000;
-  // this.save();
   return resetToken;
 };
 
