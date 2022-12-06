@@ -1,5 +1,9 @@
 const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
+const sendEmail = require("../utils/email");
+const { token } = require("morgan");
+const crypto = require("crypto");
+
 // const { promisify } = require("util");
 exports.signUp = async (req, res, next) => {
   //   const newUser = await User.create(req.body); //用户权限太大
@@ -103,9 +107,49 @@ exports.forgotPassword = async (req, res, next) => {
   //生成重置密码token
   const resetToken = user.createPasswordResetToken();
   //保存到数据库
-  await user.save({validateBeforeSave:false});
+  await user.save({ validateBeforeSave: false });
   console.log(resetToken);
   // send token
+  const resetURL = `${req.protocol}://${req.get(
+    "host"
+  )}/api/v1/users/resetPassword/${resetToken}`;
+
+  console.log(resetURL);
+
+  const message = "patch this url" + resetURL;
+
+  // await sendEmail({
+  //   email: user.email,
+  //   subject: "resetpassword",
+  //   message,
+  // });
+
+  res
+    .status(200)
+    .json({ status: "success", message: "token send to your email" });
 };
 
-exports.resetPassword = (req, res, next) => {};
+exports.resetPassword = async (req, res, next) => {
+  // get user based on token
+  const token = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+  console.log(token);
+  const user = await User.findOne({
+    passwordResetToken: token,
+    ///////////////// // passwordResetTokenExpires: { $gt: Date.now() },
+  });
+  //果然token没有过期，就重置密码
+  if (!user) {
+    return res.status(400).send("worng!");
+  }
+
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.passwordResetToken = undefined;
+  user.passwordResetTokenExpires = undefined;
+
+  await user.save();
+  res.status(200).json({ status: "success", message: "seccess" });
+};
